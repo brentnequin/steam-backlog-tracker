@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../server/generated/prisma"
+}
+
+datasource db {
+  // provider = "sqlite"
+  provider = "postgresql"
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  steamId      String     @unique
+  username     String
+  avatarUrl    String
+  createdAt    DateTime   @default(now())
+  lastSyncedAt DateTime?
+  games        UserGame[]
+}
+
+model Game {
+  id         Int        @id @default(autoincrement())
+  steamAppId Int        @unique
+  title      String
+  imageUrl   String?
+  userGames  UserGame[]
+}
+
+model UserGame {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  steamAppId   Int
+  playtime     Int       @default(0)
+  lastPlayedAt DateTime?  // optional, Steam doesn't always return this
+  status       String?
+  isFavourite  Boolean   @default(false)
+  notes        String?
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id])
+  game         Game      @relation(fields: [steamAppId], references: [steamAppId])
+
+  @@unique([userId, steamAppId])
+}
