@@ -31,6 +31,10 @@ function coverUrl(appId) {
   return `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`
 }
 
+function fallbackUrl(appId) {
+  return `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`
+}
+
 async function updateStatus(appId, status) {
   await $fetch(`/api/backlog/${appId}`, {
     method: 'PATCH',
@@ -123,6 +127,7 @@ const filtered = computed(() => {
             :src="coverUrl(entry.steamAppId)"
             :alt="entry.game.title"
             class="w-full aspect-[2/3] object-cover"
+            @error="e => e.target.src = fallbackUrl(entry.steamAppId)"
           />
           <!-- Hover overlay -->
           <div class="absolute inset-0 bg-neutral-950/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 gap-2">
