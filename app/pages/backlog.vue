@@ -7,6 +7,8 @@ if (!loggedIn.value) {
 
 const { data: backlog, refresh } = await useFetch('/api/backlog')
 
+const hideCompleted = ref(true) // on by default
+
 const statusStyles = {
   not_started: 'bg-neutral-800 text-neutral-400',
   playing:     'bg-blue-950 text-blue-400',
@@ -36,10 +38,21 @@ async function updateStatus(appId, status) {
   })
   await refresh()
 }
+
+const filtered = computed(() => {
+  if (!backlog.value) return []
+  let list = backlog.value
+
+  if (hideCompleted.value) {
+    list = list.filter(g => g.status !== 'completed')
+  }
+
+  return [...list].sort((a, b) => a.game.title.localeCompare(b.game.title))
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-950 text-white">
+  <div class="text-white">
 
     <main class="max-w-6xl mx-auto px-6 py-8">
 
@@ -47,31 +60,47 @@ async function updateStatus(appId, status) {
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         <div class="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div class="text-xs text-neutral-500 mb-1">Total</div>
-          <div class="text-2xl font-semibold">{{ backlog?.length ?? 0 }}</div>
+          <div class="text-2xl font-semibold">{{ filtered?.length ?? 0 }}</div>
         </div>
         <div class="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div class="text-xs text-neutral-500 mb-1">Not started</div>
           <div class="text-2xl font-semibold text-neutral-400">
-            {{ backlog?.filter(g => g.status === 'not_started').length ?? 0 }}
+            {{ filtered?.filter(g => g.status === 'not_started').length ?? 0 }}
           </div>
         </div>
         <div class="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div class="text-xs text-neutral-500 mb-1">Playing</div>
           <div class="text-2xl font-semibold text-blue-400">
-            {{ backlog?.filter(g => g.status === 'playing').length ?? 0 }}
+            {{ filtered?.filter(g => g.status === 'playing').length ?? 0 }}
           </div>
         </div>
         <div class="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div class="text-xs text-neutral-500 mb-1">Completed</div>
           <div class="text-2xl font-semibold text-green-400">
-            {{ backlog?.filter(g => g.status === 'completed').length ?? 0 }}
+            {{ filtered?.filter(g => g.status === 'completed').length ?? 0 }}
           </div>
         </div>
       </div>
 
+       <!-- Toolbar -->
+        <div class="flex items-center justify-between mb-6">
+            <span class="text-sm text-neutral-400">{{ filtered.length }} games</span>
+            <div class="flex items-center gap-2">
+            <input
+                type="checkbox"
+                id="hide-completed"
+                v-model="hideCompleted"
+                class="rounded border-neutral-700 bg-neutral-900"
+            />
+            <label for="hide-completed" class="text-sm text-neutral-400 cursor-pointer select-none">
+                Hide completed
+            </label>
+            </div>
+        </div>
+
       <!-- Empty state -->
       <div
-        v-if="!backlog?.length"
+        v-if="!filtered?.length"
         class="flex flex-col items-center justify-center py-24 gap-3"
       >
         <p class="text-neutral-400 text-sm">Your backlog is empty.</p>
@@ -86,7 +115,7 @@ async function updateStatus(appId, status) {
       <!-- Game grid -->
       <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
         <div
-          v-for="entry in backlog"
+          v-for="entry in filtered"
           :key="entry.steamAppId"
           class="group relative rounded-xl overflow-hidden border border-neutral-800 bg-neutral-900 hover:border-neutral-600 transition-colors"
         >

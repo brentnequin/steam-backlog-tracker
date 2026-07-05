@@ -6,22 +6,43 @@ if (!loggedIn.value) {
 }
 
 const { data: library, refresh } = await useFetch('/api/library')
+const { data: me, refresh: refreshMe } = await useFetch('/api/user/me')
+
 const syncing = ref(false)
 const search = ref('')
+const hideInBacklog = ref(true) // on by default
 
 onMounted(async () => {
+  // only auto-sync if never synced before
+  if (!me.value?.lastSyncedAt) {
+    await syncLibrary()
+  }
+})
+
+async function syncLibrary() {
   syncing.value = true
   await $fetch('/api/library/sync', { method: 'POST' })
-  await refresh()
+  await Promise.all([refresh(), refreshMe()])
   syncing.value = false
-})
+}
 
 const filtered = computed(() => {
   if (!library.value) return []
-  if (!search.value) return library.value
-  return library.value.filter(g =>
-    g.game.title.toLowerCase().includes(search.value.toLowerCase())
-  )
+  let list = library.value
+
+  if (hideInBacklog.value) {
+    list = list.filter(g => !g.status)
+  }
+
+  if (search.value) {
+    list = list.filter(g =>
+      g.game.title.toLowerCase().includes(search.value.toLowerCase())
+    )
+  }
+
+  list = [...list].sort((a, b) => a.game.title.localeCompare(b.game.title))
+
+  return list
 })
 
 function coverUrl(appId) {
@@ -34,6 +55,15 @@ async function addToBacklog(appId) {
     body: { status: 'not_started' }
   })
   await refresh()
+}
+
+function timeAgo(date) {
+  if (!date) return null
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
+  if (seconds < 60) return 'just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  return `${Math.floor(seconds / 86400)}d ago`
 }
 </script>
 
@@ -52,15 +82,35 @@ async function addToBacklog(appId) {
             class="w-full bg-neutral-900 border border-neutral-800 rounded-lg px-4 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-600"
           />
         </div>
-        <div class="flex items-center gap-2 text-sm text-neutral-400">
-          <span v-if="syncing" class="flex items-center gap-2">
-            <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-            </svg>
-            Syncing...
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="hide-backlog"
+            v-model="hideInBacklog"
+            class="rounded border-neutral-700 bg-neutral-900 text-white"
+          />
+          <label for="hide-backlog" class="text-sm text-neutral-400 cursor-pointer select-none whitespace-nowrap">
+            Hide games in backlog
+          </label>
+        </div>
+        <div class="flex items-center gap-3">
+          <span v-if="me?.lastSyncedAt" class="text-xs text-neutral-500">
+            Synced {{ timeAgo(me.lastSyncedAt) }}
           </span>
-          <span v-else>{{ library?.length ?? 0 }} games</span>
+          <button
+            @click="syncLibrary"
+            :disabled="syncing"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg
+              :class="['w-4 h-4', syncing && 'animate-spin']"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            >
+              <path d="M21 12a9 9 0 11-6.219-8.56" stroke-linecap="round"/>
+            </svg>
+            {{ syncing ? 'Syncing...' : 'Sync library' }}
+          </button>
+          <span class="text-sm text-neutral-400">{{ library?.length ?? 0 }} games</span>
         </div>
       </div>
 

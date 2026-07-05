@@ -15,8 +15,8 @@ function isActive(path: string) {
 
 
 <template>
-    <header class="border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
-      <h1 class="text-lg font-semibold tracking-tight">Steam Backlogger</h1>
+    <header class="sticky top-0 z-10 bg-neutral-950 border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
+      <h1 class="text-lg font-semibold tracking-tight text-white">Steam Backlogger</h1>
 
       <nav class="flex items-center gap-1">
           <NuxtLink

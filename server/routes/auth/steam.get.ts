@@ -21,6 +21,6 @@ export default defineOAuthSteamEventHandler({
       }
     })
 
-    return sendRedirect(event, '/library')
+    return sendRedirect(event, '/backlog')
   }
 })
