@@ -77,7 +77,7 @@ const filtered = computed(() => {
         <div class="bg-neutral-900 rounded-xl p-4 border border-neutral-800">
           <div class="text-xs text-neutral-500 mb-1">Completed</div>
           <div class="text-2xl font-semibold text-green-400">
-            {{ filtered?.filter(g => g.status === 'completed').length ?? 0 }}
+            {{ backlog?.filter(g => g.status === 'completed').length ?? 0 }}
           </div>
         </div>
       </div>
