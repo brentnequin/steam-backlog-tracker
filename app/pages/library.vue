@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 const { user, loggedIn, clear } = useUserSession()
 
 if (!loggedIn.value) {
@@ -45,27 +45,31 @@ const filtered = computed(() => {
   return list
 })
 
-function coverUrl(appId) {
+function coverUrl(appId: number) {
   return `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/library_600x900.jpg`
 }
 
-function fallbackUrl(appId) {
+function fallbackUrl(appId: number) {
   return `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`
 }
 
-function onImageError(e, appId) {
-  const img = e.target
+function onImageError(e: Event, appId: number) {
+  const img = e.target as HTMLImageElement
+  
   if (img.dataset.fallback === '1') {
-    // both failed, show placeholder
+    // fallback also failed, stop and show placeholder
+    img.removeEventListener('error', () => {})
     img.style.display = 'none'
-    img.nextElementSibling.style.display = 'flex'
-  } else {
-    img.dataset.fallback = '1'
-    img.src = fallbackUrl(appId)
+    const placeholder = img.nextElementSibling as HTMLElement
+    if (placeholder) placeholder.style.display = 'flex'
+    return
   }
+
+  img.dataset.fallback = '1'
+  img.src = fallbackUrl(appId)
 }
 
-async function addToBacklog(appId) {
+async function addToBacklog(appId: number) {
   await $fetch(`/api/backlog/${appId}`, {
     method: 'PATCH',
     body: { status: 'not_started' }
@@ -73,7 +77,7 @@ async function addToBacklog(appId) {
   await refresh()
 }
 
-function timeAgo(date) {
+function timeAgo(date: string | null) {
   if (!date) return null
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
   if (seconds < 60) return 'just now'
@@ -149,6 +153,7 @@ function timeAgo(date) {
           <img
             :src="coverUrl(entry.steamAppId)"
             :alt="entry.game.title"
+            loading="lazy"
             class="w-full aspect-[2/3] object-cover"
             @error="e => onImageError(e, entry.steamAppId)"
           />
