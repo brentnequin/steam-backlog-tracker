@@ -74,7 +74,7 @@ async function addToBacklog(appId: number) {
     method: 'PATCH',
     body: { status: 'not_started' }
   })
-  await refresh()
+  await navigateTo(`/game/${appId}`)
 }
 
 function timeAgo(date: string | null) {

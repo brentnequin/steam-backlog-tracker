@@ -134,9 +134,10 @@ const filtered = computed(() => {
 
       <!-- Game grid -->
       <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-        <div
+        <NuxtLink
           v-for="entry in filtered"
           :key="entry.steamAppId"
+          :to="`/game/${entry.steamAppId}`"
           class="group relative rounded-xl overflow-hidden border border-neutral-800 bg-neutral-900 hover:border-neutral-600 transition-colors"
         >
           <img
@@ -149,18 +150,11 @@ const filtered = computed(() => {
           <!-- Hover overlay -->
           <div class="absolute inset-0 bg-neutral-950/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 gap-2">
             <p class="text-xs font-medium leading-tight">{{ entry.game.title }}</p>
-            <!-- Status selector -->
-            <select
-              :value="entry.status"
-              @change="updateStatus(entry.steamAppId, $event.target.value)"
-              :class="['text-xs px-2 py-1 rounded-lg w-full font-medium border-0 cursor-pointer focus:outline-none', statusStyles[entry.status]]"
-            >
-              <option v-for="s in statuses" :key="s" :value="s">
-                {{ statusLabel[s] }}
-              </option>
-            </select>
+            <span :class="['text-xs px-2 py-0.5 rounded-full w-fit font-medium', statusStyles[entry.status]]">
+              {{ statusLabel[entry.status] }}
+            </span>
           </div>
-        </div>
+        </NuxtLink>
       </div>
 
     </main>
