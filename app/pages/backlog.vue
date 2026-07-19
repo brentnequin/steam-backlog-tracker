@@ -51,13 +51,7 @@ function onImageError(e: Event, appId: number) {
   img.src = fallbackUrl(appId)
 }
 
-async function updateStatus(appId: number, status: string) {
-  await $fetch(`/api/backlog/${appId}`, {
-    method: 'PATCH',
-    body: { status }
-  })
-  await refresh()
-}
+const activeStatus = ref<string | null>(null)
 
 const filtered = computed(() => {
   if (!backlog.value) return []
@@ -67,8 +61,16 @@ const filtered = computed(() => {
     list = list.filter(g => g.status !== 'completed')
   }
 
+  if (activeStatus.value) {
+    list = list.filter(g => g.status === activeStatus.value)
+  }
+
   return [...list].sort((a, b) => a.game.title.localeCompare(b.game.title))
 })
+
+function setStatus(status: string | null) {
+  activeStatus.value = status
+}
 </script>
 
 <template>
@@ -103,20 +105,36 @@ const filtered = computed(() => {
       </div>
 
        <!-- Toolbar -->
-        <div class="flex items-center justify-between mb-6">
-            <span class="text-sm text-neutral-400">{{ filtered.length }} games</span>
-            <div class="flex items-center gap-2">
-            <input
-                type="checkbox"
-                id="hide-completed"
-                v-model="hideCompleted"
-                class="rounded border-neutral-700 bg-neutral-900"
-            />
-            <label for="hide-completed" class="text-sm text-neutral-400 cursor-pointer select-none">
-                Hide completed
-            </label>
-            </div>
+      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button
+            @click="setStatus(null)"
+            :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', activeStatus === null ? 'bg-neutral-700 text-white' : 'bg-neutral-900 text-neutral-400 hover:text-white']"
+          >
+            All
+          </button>
+          <button
+            v-for="s in statuses"
+            :key="s"
+            @click="setStatus(s)"
+            :class="['px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', activeStatus === s ? statusStyles[s] : 'bg-neutral-900 text-neutral-400 hover:text-white']"
+          >
+            {{ statusLabel[s] }}
+          </button>
         </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="hide-completed"
+            v-model="hideCompleted"
+            class="rounded border-neutral-700 bg-neutral-900"
+          />
+          <label for="hide-completed" class="text-sm text-neutral-400 cursor-pointer select-none">
+            Hide completed
+          </label>
+        </div>
+      </div>
 
       <!-- Empty state -->
       <div
