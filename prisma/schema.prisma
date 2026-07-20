@@ -16,6 +16,7 @@ model User {
   createdAt    DateTime   @default(now())
   lastSyncedAt DateTime?
   games        UserGame[]
+  achievements  UserAchievement[]
 }
 
 model Game {
@@ -37,8 +38,28 @@ model UserGame {
   notes        String?
   updatedAt    DateTime  @updatedAt
 
+  achievementTotal    Int @default(0)
+  achievementUnlocked Int @default(0)
+
   user         User      @relation(fields: [userId], references: [id])
   game         Game      @relation(fields: [steamAppId], references: [steamAppId])
 
   @@unique([userId, steamAppId])
+}
+
+model UserAchievement {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  steamAppId  Int
+  apiName     String
+  displayName String
+  description String?
+  iconUrl     String?
+  iconGrayUrl String?
+  unlocked    Boolean   @default(false)
+  unlockedAt  DateTime?
+
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, steamAppId, apiName])
 }

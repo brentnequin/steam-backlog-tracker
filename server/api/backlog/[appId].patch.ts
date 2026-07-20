@@ -1,11 +1,13 @@
+// server/api/backlog/[appId].patch.ts
 import prisma from '../../lib/prisma'
+import { syncAchievements } from '../../lib/syncAchievements'
 
 export default defineEventHandler(async (event) => {
   const { user } = await getUserSession(event)
   if (!user) throw createError({ statusCode: 401 })
 
   const appId = parseInt(getRouterParam(event, 'appId') ?? '')
-  if (isNaN(appId)) throw createError({ statusCode: 400, message: 'Invalid appId' })
+  if (isNaN(appId)) throw createError({ statusCode: 400 })
 
   const body = await readBody(event)
   const { status } = body
@@ -30,6 +32,9 @@ export default defineEventHandler(async (event) => {
     data: { status },
     include: { game: true }
   })
+
+  // sync achievements in background, don't await so it doesn't block the response
+  syncAchievements(user.steamId, dbUser.id, appId).catch(console.error)
 
   return updated
 })

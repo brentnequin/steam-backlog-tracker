@@ -31,6 +31,12 @@ function isActive(path: string) {
           >
             Backlog
           </NuxtLink>
+          <NuxtLink
+            to="/completionist"
+            :class="['px-3 py-1.5 rounded-lg text-sm transition-colors', isActive('/completionist') ? 'text-white bg-neutral-800' : 'text-neutral-400 hover:text-white hover:bg-neutral-800']"
+          >
+            Completionist
+          </NuxtLink>
         </nav>
 
 
